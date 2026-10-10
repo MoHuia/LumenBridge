@@ -12,6 +12,7 @@
 /[Bb]uilds/
 /[Mm]emoryCaptures/
 /[Rr]ecordings/
+/Captures/
 *.apk
 *.aab
 *.app
