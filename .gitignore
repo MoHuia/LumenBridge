@@ -1,0 +1,73 @@
+# Unity 自动生成的缓存、临时文件与本机设置
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/.utmp/
+*.log
+
+# 构建产物、性能捕获与录像
+/[Bb]uild/
+/[Bb]uilds/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+*.apk
+*.aab
+*.app
+*.unitypackage
+*.unitypackage.meta
+
+# Rider / Visual Studio 本地配置及 Unity 生成的工程文件
+/.idea/
+/.vs/
+*.DotSettings.user
+*.csproj
+*.unityproj
+*.sln
+*.slnx
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+/[Aa]ssets/Plugins/Editor/JetBrains*
+
+# Android 本地构建缓存与签名密钥
+/.gradle/
+/ExportedObj/
+*.keystore
+*.jks
+
+# 崩溃记录及编辑器临时产物
+sysinfo.txt
+mono_crash.*
+crashlytics-build.properties
+*.tmp
+*.blend1
+*.blend1.meta
+/[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+/UIElementsSchema/
+/[Aa]ssets/[Ss]ceneDependencyCache*
+
+# Addressables 生成的内容；配置资源仍需提交
+/ServerData/
+/[Aa]ssets/StreamingAssets/aa*
+/[Aa]ssets/AddressableAssetsData/link.xml*
+/[Aa]ssets/Addressables_Temp*
+/[Aa]ssets/AddressableAssetsData/*/*.bin*
+
+# 操作系统生成的文件
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Assets 中的源资源及 .meta、Packages、ProjectSettings 和项目文档均保留
