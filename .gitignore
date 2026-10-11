@@ -12,9 +12,22 @@
 /[Bb]uilds/
 /[Mm]emoryCaptures/
 /[Rr]ecordings/
-/Captures/
+/[Cc]aptures/
+# Unity Recorder 与 Profiler 文件夹在 Assets 下产生的对应 meta
+/[Mm]emoryCaptures.meta
+/[Rr]ecordings.meta
+# Unity MCP 默认生成的检查截图；宣传图请放入项目美术目录
+/[Aa]ssets/[Ss]creenshots/
+/[Aa]ssets/[Ss]creenshots.meta
+# IL2CPP / Burst 调试信息，只用于本机排查构建
+/*_BackUpThisFolder_ButDontShipItWithYourGame/
+/*_BackUpThisFolder_ButDontShipItWithYourGame.meta
+/*_BurstDebugInformation_DoNotShip/
+/*_BurstDebugInformation_DoNotShip.meta
 *.apk
+*.apk.meta
 *.aab
+*.aab.meta
 *.app
 *.unitypackage
 *.unitypackage.meta
@@ -46,13 +59,16 @@
 /.gradle/
 /ExportedObj/
 *.keystore
+*.keystore.meta
 *.jks
+*.jks.meta
 
 # 崩溃记录及编辑器临时产物
 sysinfo.txt
 mono_crash.*
 crashlytics-build.properties
 *.tmp
+*.tmp.meta
 *.blend1
 *.blend1.meta
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
@@ -71,4 +87,22 @@ crashlytics-build.properties
 Thumbs.db
 Desktop.ini
 
-# Assets 中的源资源及 .meta、Packages、ProjectSettings 和项目文档均保留
+# 本地协作、学习与进度资料
+/AGENTS.md
+/CLAUDE.md
+/GEMINI.md
+/MISSION.md
+/GLOSSARY.md
+/RESOURCES.md
+/START-HERE.md
+/.codex/
+/.claude/
+/.agents/
+/.cursor/
+/.mcp.json
+/mcp.json
+/lessons/
+/learning-records/
+/docs/
+
+# 保留游戏源码、资源及 .meta、Packages 和 ProjectSettings
