@@ -37,12 +37,19 @@ namespace _Project.Scripts.Bootstrap
         
         // 将创建好的光源实体交给输入连接组件
         [SerializeField] private LightTargetInputBridge m_lightInputBridge;
+        
+        // Inspector 指定场景中的范围圆环显示组件
+        [SerializeField] private LightRangeView m_lightRangeView;
 
         /// <summary>
         /// 进入运行后创建一只实体，并设置位置和速度
         /// </summary>
         private void Start()
         {
+            // 性能对比：请求每秒 120 帧，不保证设备一定达到。
+            // 暂放在此初始化入口，后续移到应用级配置。
+            Application.targetFrameRate = 120;
+            
             // 未指定显示组件时提示接线问题，避免创建后无法显示
             if (m_viewPrefab == null)
             {
@@ -56,9 +63,15 @@ namespace _Project.Scripts.Bootstrap
             // EntityManager 是创建实体、读写组件和销毁实体的入口
             var manager = m_world.EntityManager;
             
-            // 单独创建光源数据实体
-            // 此组件只添加到这一个实体上，不添加到每只光虫身上
-            m_lightTarget = manager.CreateEntity(typeof(LightTargetPosition));
+            // 同一个光源实体保存位置与吸引半径。
+            // 光虫实体自身不添加这两个组件。
+            m_lightTarget = manager.CreateEntity(typeof(LightTargetPosition),typeof(LightInfluenceRadius),typeof(LightSlowdownRadius));
+            
+            // 减速区域为中心附件 0.8 个世界单位
+            manager.SetComponentData(m_lightTarget,new LightSlowdownRadius { value = 0.8f });
+            
+            // 初始化共同吸引半径；输入桥接仍只负责更新位置
+            manager.SetComponentData(m_lightTarget,new LightInfluenceRadius { value = 4.5f });
             
             // 创建标识数组：这一步还没有创建任何 ECS 实体
             // Math.Max 同时保证运行时数量至少为 1
@@ -130,6 +143,12 @@ namespace _Project.Scripts.Bootstrap
             if (m_lightInputBridge != null)
             {
                 m_lightInputBridge.Initialize(m_world, m_lightTarget);
+            }
+            
+            // 输入桥接和圆环显示绑定同一个光源实体
+            if (m_lightRangeView != null)
+            {
+                m_lightRangeView.Initialize(m_world,m_lightTarget);
             }
         }
 
