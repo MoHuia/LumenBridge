@@ -20,13 +20,20 @@ namespace _Project.Scripts.Bootstrap
 
         // 光虫的实体标识，用于读写它的组件数据
         // 它不是画面中小球的 GameObject
-        private Entity m_firefly;
+        // 本次先验证 10 只；至少创建一只，供现有显示组件使用
+        [SerializeField, Min(1)] private int m_fireflyCount = 10;
+
+        // 普通 C# 数组，只保存本入口创建的实体标识
+        // 位置、速度等组件数据仍保存在 ECS 世界里
+        // 保留这些标识，是为了销毁时只清理自己创建的实体
+        private Entity[] m_fireflies;
         
         // 保存共同光源的实体标识，供初始化和清理使用
         private Entity m_lightTarget;
         
-        // 在 Inspector 中指定负责显示这只实体的小球组件
-        [SerializeField] private FireflyView m_view;
+        /// Inspector 指定 Project 中的光虫预制体。
+        // 它是创建显示对象的模板，每只实体使用一个独立实例。
+        [SerializeField] private FireflyView m_viewPrefab;
         
         // 将创建好的光源实体交给输入连接组件
         [SerializeField] private LightTargetInputBridge m_lightInputBridge;
@@ -37,7 +44,7 @@ namespace _Project.Scripts.Bootstrap
         private void Start()
         {
             // 未指定显示组件时提示接线问题，避免创建后无法显示
-            if (m_view == null)
+            if (m_viewPrefab == null)
             {
                 Debug.LogError("请在 Inspector 中指定光虫显示组件",this);
                 return;
@@ -53,30 +60,71 @@ namespace _Project.Scripts.Bootstrap
             // 此组件只添加到这一个实体上，不添加到每只光虫身上
             m_lightTarget = manager.CreateEntity(typeof(LightTargetPosition));
             
-            // 创建光虫实体，添加位置、速度和到达距离组件。
-            m_firefly = manager.CreateEntity(typeof(LocalTransform), typeof(FireflySpeed), typeof(FireflyArrivalDistance));
-            
-            // 将实体的初始位置设为原地
-            // FromPosition 同时将旋转设为无旋转、缩放设为 1
-            manager.SetComponentData(m_firefly,LocalTransform.FromPosition(0f,0f,0f));
-            
-            // 设置速度为每秒 4 个 Unity 单位
-            // 这里只保存速度，尚未执行移动
-            manager.SetComponentData(m_firefly,new FireflySpeed { value = 4f });
+            // 创建标识数组：这一步还没有创建任何 ECS 实体
+            // Math.Max 同时保证运行时数量至少为 1
+            m_fireflies = new Entity[Mathf.Max(1, m_fireflyCount)];
 
-            // 设置这只光虫到达共同光源时的停止距离。
-            // 距离光源不超过 0.2 个单位时，运动系统停止移动。
-            manager.SetComponentData(m_firefly, new FireflyArrivalDistance
+            // 每行放 10 只光虫；列沿 X，行沿 Z
+            var columns = 10;
+            
+            // 整数除法会舍去小数，因此先加 columns - 1，实现向上取证
+            // 例如 100 只需要 10 行，11 只需要 2 行
+            var rows = (m_fireflies.Length + columns - 1) / columns;
+
+            for (var i = 0; i < m_fireflies.Length; i++)
             {
-                stoppingDistance = 0.2f
-            });
-            
-            // 从实体上读回速度，验证数据是否设置成功
-            var speed = manager.GetComponentData<FireflySpeed>(m_firefly);
-            Debug.Log($"光虫实体已创建，速度：{speed.value}");
-            
-            // 实体创建并设置好数据后，把它交给显示组件
-            m_view.Initialize(m_world,m_firefly);
+                // 每次循环创建一个独立实体，拥有自己的位置和速度
+                // 不添加 LightTargetPosition: 让所有光虫读取同一个共同光源
+                var firefly = manager.CreateEntity(
+                    typeof(LocalTransform),
+                    typeof(FireflySpeed),
+                    typeof(FireflyArrivalDistance));
+                
+                // 立即记录归本入口所有的实体，供后续绑定和清理使用
+                m_fireflies[i] = firefly;
+                
+                // 取余得到列号：0～9，超过一行后从 0 重新开始。
+                // 整数除法得到行号：每创建 10 只，行号增加 1。
+                var column = i % columns;
+                var row = i / columns;
+
+                // 减去半宽/半高，使网格以世界原点为中心。
+                // X 间距为 1，Z 间距为 0.5，单位均为世界单位。
+                var spawnX = (column - (columns - 1) * 0.5f) * 1f;
+                var spawnZ = (row - (rows - 1) * 0.5f) * 0.5f;
+
+                // ECS 实体从网格位置出生，Y 保持在地面平面。
+                manager.SetComponentData(
+                    firefly,
+                    LocalTransform.FromPosition(spawnX, 0f, spawnZ));
+                
+                // 设置每只光虫的移动速度，单位为世界单位/秒。
+                // 添加组件后默认值为 0，必须赋值才能产生位移。
+                manager.SetComponentData(
+                    firefly, new FireflySpeed { value = 4f });
+
+                // 设置接近共同光源时的停止距离，单位为世界单位。
+                manager.SetComponentData(
+                    firefly, new FireflyArrivalDistance { stoppingDistance = 0.2f });
+                
+                // 复制整只光虫模型，并取得新对象上的 FireflyView。
+                // 使用与实体一致的世界出生位置，避免显示先出现在原点。
+                // transform 是当前初始化对象，将显示对象放在它的层级下面。
+                var view = Instantiate(
+                    m_viewPrefab,
+                    new Vector3(spawnX, 0f, spawnZ),
+                    Quaternion.identity,
+                    transform);
+
+                // 名字只用于在 Hierarchy 中检查数量和区分显示对象。
+                view.gameObject.name = $"FireflyView_{i}";
+
+                // 当前循环创建的显示对象，绑定当前循环创建的实体。
+                // 每只显示对象因此读取不同的实体位置。
+                view.Initialize(m_world, firefly);
+            }
+
+            Debug.Log($"已创建 {m_fireflies.Length} 只光虫，共用一个光源。");
             
             // 原实验场景可以不接输入；接入后绑定同一个世界与光源实体
             if (m_lightInputBridge != null)
@@ -95,10 +143,18 @@ namespace _Project.Scripts.Bootstrap
             {
                 var manager = m_world.EntityManager;
                 
-                // 仅在实体仍然存在时销毁，避免重复清理
-                if (manager.Exists(m_firefly))
+                // Start 未完成时，数组可能尚未创建。
+                if (m_fireflies != null)
                 {
-                    manager.DestroyEntity(m_firefly);
+                    // 逐个清理本入口创建的光虫，不影响世界里的其他实体。
+                    foreach (var firefly in m_fireflies)
+                    {
+                        // 已经销毁的实体不重复清理。
+                        if (manager.Exists(firefly))
+                        {
+                            manager.DestroyEntity(firefly);
+                        }
+                    }
                 }
                 
                 // 初始化入口负责清理自己创建的光源实体

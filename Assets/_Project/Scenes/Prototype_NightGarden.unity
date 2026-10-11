@@ -5587,6 +5587,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_camera: {fileID: 330585545}
+  m_xRange: {x: -6, y: 6}
+  m_zRange: {x: -3, y: 3}
 --- !u!4 &1002840234
 Transform:
   m_ObjectHideFlags: 0
@@ -7055,7 +7057,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02d65a6fa9b6467789d1854498b04207, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_view: {fileID: 1830267711}
+  m_fireflyCount: 100
+  m_viewPrefab: {fileID: 8477874273451908977, guid: 4d1a96e06406256429ce41d0fc776a2a,
+    type: 3}
   m_lightInputBridge: {fileID: 1002840235}
 --- !u!4 &1445641637
 Transform:
@@ -8914,7 +8918,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1830267710
 Transform:
   m_ObjectHideFlags: 0

@@ -11,6 +11,10 @@ namespace _Project.Scripts.Input
     {
         // 明确指定游戏摄像机，避免每帧查找
         [SerializeField] private Camera m_camera;
+        // 光源允许移动的世界坐标范围，单位为世界单位
+        // 每个 Vector2 的 x 保存下限，y 保存上限；下限必须小于上限
+        [SerializeField] private Vector2 m_xRange = new Vector2(-6f, 6f);
+        [SerializeField] private Vector2 m_zRange = new Vector2(-3f, 3f);
 
         // 通知订阅者：玩家选择了一个新的地面世界坐标
         // 输入只提供坐标，不负责修改 ECS
@@ -46,6 +50,11 @@ namespace _Project.Scripts.Input
 
             // 根据射线距离取得地面上的世界坐标
             var position = ray.GetPoint(distance);
+            
+            // 先取得地面交点，再分别限制世界坐标 X/Z。
+            // 超出范围时贴住边缘，仍可以沿着边缘拖动。
+            position.x = Mathf.Clamp(position.x, m_xRange.x, m_xRange.y);
+            position.z = Mathf.Clamp(position.z, m_zRange.x, m_zRange.y);
             
             // 有订阅者时，将计算好的世界坐标交给它
             // ？.表示没有订阅者时不调用，避免空引用
