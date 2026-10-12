@@ -43,6 +43,9 @@ namespace _Project.Scripts.Bootstrap
         
         // Inspector 指定场景中的范围圆环显示组件
         [SerializeField] private LightRangeView m_lightRangeView;
+        
+        // Inspector 指定当前桥段的表现组件
+        [SerializeField] private BridgeSegmentView m_bridgeSegmentView;
 
         /// <summary>
         /// 进入运行后创建一只实体，并设置位置和速度
@@ -73,8 +76,9 @@ namespace _Project.Scripts.Bootstrap
             // 减速区域为中心附件 0.8 个世界单位
             manager.SetComponentData(m_lightTarget,new LightSlowdownRadius { value = 0.8f });
             
-            // 初始化共同吸引半径；输入桥接仍只负责更新位置
-            manager.SetComponentData(m_lightTarget,new LightInfluenceRadius { value = 4.5f });
+            // 初始化共同吸引半径为 3 个世界单位；输入桥接只更新位置。
+            // 圆环读取同一份半径，显示范围与实际吸引范围保持一致。
+            manager.SetComponentData(m_lightTarget,new LightInfluenceRadius { value = 3f });
             
             // 创建标识数组：这一步还没有创建任何 ECS 实体
             // Math.Max 同时保证运行时数量至少为 1
@@ -186,6 +190,12 @@ namespace _Project.Scripts.Bootstrap
             if (m_lightRangeView != null)
             {
                 m_lightRangeView.Initialize(m_world,m_lightTarget);
+            }
+
+            // 将本入口创建的桥段交给表现组件，使用同一个 ECS 世界
+            if (m_bridgeSegmentView != null)
+            {
+                m_bridgeSegmentView.Initialize(m_world,m_bridgeSegment);
             }
         }
 
