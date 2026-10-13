@@ -31,8 +31,8 @@ namespace _Project.Scripts.Bootstrap
         // 保存共同光源的实体标识，供初始化和清理使用
         private Entity m_lightTarget;
 
-        // 保存本入口创建的桥段实体，供初始化和清理使用
-        private Entity m_bridgeSegment;
+        // 保存三个桥段的实体标识；各自组件数据仍在 ECS 世界中
+        private Entity[] m_bridgeSegments;
         
         /// Inspector 指定 Project 中的光虫预制体。
         // 它是创建显示对象的模板，每只实体使用一个独立实例。
@@ -91,40 +91,50 @@ namespace _Project.Scripts.Bootstrap
             // 例如 100 只需要 10 行，11 只需要 2 行
             var rows = (m_fireflies.Length + columns - 1) / columns;
 
-            // 创建桥段实体，同时添加区域组件
-            m_bridgeSegment = manager.CreateEntity(
-                typeof(BridgeSegmentBounds),
-                typeof(BridgeSegmentCount),
-                typeof(BridgeSegmentFormationSettings),
-                typeof(BridgeSegmentFormationProgress),
-                typeof(BridgeSegmentSupportSettings),
-                typeof(BridgeSegmentSupportState));
-            
-            // 写入世界平面矩形
-            manager.SetComponentData(m_bridgeSegment,new BridgeSegmentBounds { min = new float2(-1f,-0.75f),max = new float2(1f,0.75f)});
+            // 准备三个槽位；此时还没有创建桥段实体
+            m_bridgeSegments = new Entity[3];
 
-            // 成立参数：18 只，连续 0.35 秒
-            // Progress 新建后的默认值为 elapsed=0、isReady=false
-            manager.SetComponentData(m_bridgeSegment,
-                new BridgeSegmentFormationSettings
-                {
-                    requiredCount = 18,
-                    duration = 0.35f
-                });
-            
-            // 已经成立的桥，12 只即可维持，支撑不足连续 0.8 秒才失效
-            manager.SetComponentData(m_bridgeSegment,
-                new BridgeSegmentSupportSettings
-                {
-                    maintainCount = 12,
-                    graceDuration = 0.8f
-                });
-            
-            // 从 ECS 世界读回实际保存的数据，用于核对初始化
-            var bounds = manager.GetComponentData<BridgeSegmentBounds>(m_bridgeSegment);
-            
-            Debug.Log($"桥段区域：X=[{bounds.min.x}, {bounds.max.x})，Z=[{bounds.min.y}, {bounds.max.y})");
+            for (var i = 0; i < m_bridgeSegments.Length; i++)
+            {
+                var segment = manager.CreateEntity(
+                    typeof(BridgeSegmentBounds),
+                    typeof(BridgeSegmentCount),
+                    typeof(BridgeSegmentFormationSettings),
+                    typeof(BridgeSegmentFormationProgress),
+                    typeof(BridgeSegmentSupportSettings),
+                    typeof(BridgeSegmentSupportState));
+                
+                m_bridgeSegments[i] = segment;
 
+                var minX = -3f + i * 2f;
+                var maxX = minX + 2f;
+                
+                // 写入世界平面矩形
+                manager.SetComponentData(segment,new BridgeSegmentBounds { min = new float2(minX, -0.75f),max = new float2(maxX, 0.75f)});
+                
+                // 成立参数：18 只，连续 0.35 秒
+                // Progress 新建后的默认值为 elapsed=0、isReady=false
+                manager.SetComponentData(segment,
+                    new BridgeSegmentFormationSettings
+                    {
+                        requiredCount = 18,
+                        duration = 0.35f
+                    });
+                
+                // 已经成立的桥，12 只即可维持，支撑不足连续 0.8 秒才失效
+                manager.SetComponentData(segment,
+                    new BridgeSegmentSupportSettings
+                    {
+                        maintainCount = 12,
+                        graceDuration = 0.8f
+                    });
+            
+                // 从 ECS 世界读回实际保存的数据，用于核对初始化
+                var bounds = manager.GetComponentData<BridgeSegmentBounds>(segment);
+            
+                Debug.Log($"桥段区域：X=[{bounds.min.x}, {bounds.max.x})，Z=[{bounds.min.y}, {bounds.max.y})");
+            }
+            
             for (var i = 0; i < m_fireflies.Length; i++)
             {
                 // 每次循环创建一个独立实体，拥有自己的位置和速度
@@ -195,7 +205,7 @@ namespace _Project.Scripts.Bootstrap
             // 将本入口创建的桥段交给表现组件，使用同一个 ECS 世界
             if (m_bridgeSegmentView != null)
             {
-                m_bridgeSegmentView.Initialize(m_world,m_bridgeSegment);
+                m_bridgeSegmentView.Initialize(m_world,m_bridgeSegments[1]);
             }
         }
 
@@ -209,10 +219,16 @@ namespace _Project.Scripts.Bootstrap
             {
                 var manager = m_world.EntityManager;
 
-                // 世界仍有效时，只销毁本入口创建且仍存在的桥段实体。
-                if (manager.Exists(m_bridgeSegment))
+                // 世界仍有效时，销毁创建且仍存在的桥段实体。
+                if (m_bridgeSegments != null)
                 {
-                    manager.DestroyEntity(m_bridgeSegment);
+                    foreach (var segment in m_bridgeSegments)
+                    {
+                        if (manager.Exists(segment))
+                        {
+                            manager.DestroyEntity(segment);
+                        }
+                    }
                 }
                 
                 // Start 未完成时，数组可能尚未创建。
